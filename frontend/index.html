@@ -46,7 +46,7 @@ async function record() {
     formData.append("audio", blob, "recording.webm");
 
     try {
-      const res = await fetch("http://localhost:5000/upload", {
+      const res = await fetch("https://voice-ai-project.onrender.com/upload", {
         method: "POST",
         body: formData
       });
