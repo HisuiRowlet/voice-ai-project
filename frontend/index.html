@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Voice Assistant</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+    button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+    #output { margin-top: 20px; padding: 16px; background: #f0f0f0; border-radius: 8px; min-height: 40px; }
+    #status { color: #888; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <h2>🎤 AI Voice Assistant</h2>
+  <button onclick="record()">Record (3 sec)</button>
+  <p id="status"></p>
+  <p><b>Response:</b></p>
+  <div id="output">Your answer will appear here...</div>
+
+<script>
+async function record() {
+  const status = document.getElementById("status");
+  const output = document.getElementById("output");
+
+  status.innerText = "🎙 Recording...";
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    status.innerText = "❌ Microphone access denied.";
+    return;
+  }
+
+  const options = { mimeType: 'audio/webm;codecs=opus' };
+  const recorder = new MediaRecorder(stream, options);
+  let chunks = [];
+
+  recorder.ondataavailable = e => chunks.push(e.data);
+
+  recorder.onstop = async () => {
+    status.innerText = "⏳ Processing...";
+
+    const blob = new Blob(chunks, { type: "audio/webm" });
+    const formData = new FormData();
+    formData.append("audio", blob, "recording.webm");
+
+    try {
+      const res = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        status.innerText = "❌ Server error.";
+        output.innerText = text;
+        return;
+      }
+
+      const data = await res.json();
+      output.innerText = data.reply || JSON.stringify(data);
+      status.innerText = "✅ Done!";
+
+    } catch (err) {
+      status.innerText = "❌ Could not reach backend.";
+      output.innerText = err.message;
+    }
+  };
+
+  recorder.start();
+  setTimeout(() => recorder.stop(), 5000);
+}
+</script>
+
+</body>
+</html>
