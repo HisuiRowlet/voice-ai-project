@@ -36,3 +36,7 @@ app.post("/upload", upload.single("audio"), async (req, res) => {
 app.listen(process.env.PORT, () => {
   console.log(`✅ Server running on port ${process.env.PORT}`);
 });
+
+app.get("/upload", (req, res) => {
+  res.send("Upload endpoint is working (use POST)");
+});
